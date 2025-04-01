@@ -390,8 +390,9 @@ impl GGUFTokenizer {
                 let mut result = Vec::new();
 
                 // First try word-level splitting
-                for word in text.split_whitespace() {
-                    if self.token_to_id.contains_key(word) {
+                let words: Vec<&str> = text.split_whitespace().collect();
+                for (i, word) in words.iter().enumerate() {
+                    if self.token_to_id.contains_key(&word.to_string()) {
                         // If the word is in the vocabulary, use it directly
                         result.push(word.to_string());
                     } else {
@@ -399,10 +400,11 @@ impl GGUFTokenizer {
                         for c in word.chars() {
                             result.push(c.to_string());
                         }
-                        // Add space after each word except the last one
-                        if !word.is_empty() {
-                            result.push(" ".to_string());
-                        }
+                    }
+
+                    // Add space after each word except the last one
+                    if i < words.len() - 1 {
+                        result.push(" ".to_string());
                     }
                 }
 
@@ -456,8 +458,6 @@ impl GGUFTokenizer {
 
 impl Tokenizer for GGUFTokenizer {
     fn new(tokenizer_path: &str) -> Result<Self, String> {
-        // Load the GGUF model
-        println!("Loading GGUF model from: {}", tokenizer_path);
         let model = GGUFModel::load(tokenizer_path)
             .map_err(|e| format!("Failed to load GGUF model: {}", e))?;
 
@@ -583,33 +583,33 @@ impl Tokenizer for GGUFTokenizer {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     // Test loading a tokenizer
-//     #[test]
-//     fn test_load_tokenizer() {
-//         // This test requires a real GGUF model file
-//         // Uncomment and point to a real model to test
-//         let model_path = "/Volumes/Ollama/qwen2.5-0.5b-instruct-fp16.gguf";
-//         let tokenizer = GGUFTokenizer::new(model_path);
-//         assert!(tokenizer.is_ok());
+    // Test loading a tokenizer
+    #[test]
+    fn test_load_tokenizer() {
+        // This test requires a real GGUF model file
+        // Uncomment and point to a real model to test
+        let model_path = "gguf/qwen2.5-0.5b-instruct-q8.gguf";
+        let tokenizer = GGUFTokenizer::new(model_path);
+        assert!(tokenizer.is_ok());
 
-//         if let Ok(tokenizer) = tokenizer {
-//             // Test basic encoding and decoding
-//             let text = "Hello, world!";
-//             let tokens = tokenizer.encode(text, false, false);
-//             let decoded = tokenizer.decode(tokens).unwrap();
-//             println!("Original: '{}', Decoded: '{}'", text, decoded);
+        if let Ok(tokenizer) = tokenizer {
+            // Test basic encoding and decoding
+            let text = "Hello, world!";
+            let tokens = tokenizer.encode(text, false, false);
+            let decoded = tokenizer.decode(tokens).unwrap();
+            println!("Original: '{}', Decoded: '{}'", text, decoded);
 
-//             // Test with special tokens
-//             let tokens_with_special = tokenizer.encode(text, true, true);
-//             let decoded_with_special = tokenizer.decode(tokens_with_special).unwrap();
-//             println!(
-//                 "With special tokens - Original: '{}', Decoded: '{}'",
-//                 text, decoded_with_special
-//             );
-//         }
-//     }
-// }
+            // Test with special tokens
+            let tokens_with_special = tokenizer.encode(text, true, true);
+            let decoded_with_special = tokenizer.decode(tokens_with_special).unwrap();
+            println!(
+                "With special tokens - Original: '{}', Decoded: '{}'",
+                text, decoded_with_special
+            );
+        }
+    }
+}
